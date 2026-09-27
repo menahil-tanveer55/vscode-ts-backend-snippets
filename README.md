@@ -25,7 +25,7 @@ Every prefix starts with `xp-` (short for Express), so the snippets never collid
 
 Names are hierarchical: `xp-<category>-<variant>`. Typing a category lists the whole group:
 
-- `xp-mw` shows every middleware (`xp-mw-base`, `xp-mw-auth`, `xp-mw-error`, `xp-mw-idempotency`)
+- `xp-mw` shows every middleware (`xp-mw-base`, `xp-mw-auth`, `xp-mw-error`, `xp-mw-idempotency`, `xp-mw-rate-limit`)
 - `xp-error` shows every error class (`xp-error-base`, the `AppError` that other error classes extend)
 - `xp-test` shows every test type (`xp-test-unit`)
 
@@ -59,6 +59,7 @@ The generated code assumes:
 | Middleware | `xp-mw-auth`        | Auth Middleware        | Bearer token extraction and verification                                     |
 | Middleware | `xp-mw-error`       | Error Middleware       | 4-argument error handler: `AppError` and 4xx client errors, generic 500 else |
 | Middleware | `xp-mw-idempotency` | Idempotency Middleware | `Idempotency-Key` handling with payload hashing and response replay          |
+| Middleware | `xp-mw-rate-limit` | Rate Limit Middleware   | In-memory fixed-window request limit keyed by client IP                       |
 | Errors     | `xp-error-base`     | App Error              | `AppError` class with `statusCode`, `isOperational` and `cause`              |
 | Data       | `xp-service`        | Service Class          | Typed service class with an async method skeleton                            |
 | Data       | `xp-types`          | Types File             | Status union type plus entity, request and response interfaces               |
@@ -287,6 +288,58 @@ export const authMiddleware = async (
     // Unexpected failure (for example the key store is down): not the client's
     // fault, so forward it to the error middleware instead of answering 401.
     next(error);
+    return;
+  }
+
+  next();
+};
+```
+
+---
+
+#### `xp-mw-rate-limit`: Rate Limit Middleware
+
+Applies a fixed-window limit per client IP, returns 429 after the configured request count, and includes standard rate-limit headers. The in-memory map expires old entries as requests arrive. This is a single-process starting point: multiple server processes need a shared store such as Redis. If the app is behind a reverse proxy, configure Express `trust proxy` only for trusted proxies so `req.ip` identifies clients correctly. Tab stops: window duration in milliseconds, requests per window.
+
+```ts
+import type { NextFunction, Request, Response } from 'express';
+
+type RateLimitWindow = { count: number; resetAt: number };
+const requestsByIp = new Map<string, RateLimitWindow>();
+
+const windowMs = 60_000;
+const maxRequests = 100;
+
+export const rateLimit = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  const now = Date.now();
+
+  // Expire old entries as traffic arrives; no background timer is needed.
+  for (const [ip, window] of requestsByIp) {
+    if (window.resetAt <= now) requestsByIp.delete(ip);
+  }
+
+  const clientIp = req.ip ?? req.socket.remoteAddress ?? 'unknown';
+  const current = requestsByIp.get(clientIp);
+  const window = current && current.resetAt > now
+    ? current
+    : { count: 0, resetAt: now + windowMs };
+
+  window.count += 1;
+  requestsByIp.set(clientIp, window);
+
+  const remaining = Math.max(0, maxRequests - window.count);
+  const secondsUntilReset = Math.max(1, Math.ceil((window.resetAt - now) / 1000));
+  res.setHeader('RateLimit-Limit', maxRequests);
+  res.setHeader('RateLimit-Remaining', remaining);
+  res.setHeader('RateLimit-Reset', secondsUntilReset);
+
+  if (window.count > maxRequests) {
+    res.setHeader('Retry-After', secondsUntilReset);
+    res.status(429).json({ error: 'Too many requests' });
     return;
   }
 
@@ -605,7 +658,6 @@ npm run verify
 Snippets that will be added as patterns come up in real projects:
 
 - `xp-mw-validate`: Zod request validation middleware
-- `xp-mw-rate-limit`: rate-limit middleware
 - `xp-test-api`: Supertest integration test block
 - Prisma service method
 - JWT sign / verify helpers
