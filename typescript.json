@@ -468,5 +468,27 @@
       "});"
     ],
     "description": "xp-test-unit: Jest unit test for a service class with a todo placeholder"
+  },
+  "Request Validation Middleware": {
+    "prefix": "xp-mw-validate",
+    "body": [
+      "import type { ZodType } from 'zod';",
+      "import type { NextFunction, Request, Response } from 'express';",
+      "",
+      "export const ${1:validateBody} = <T>(schema: ZodType<T>) =>",
+      "  (req: Request, res: Response, next: NextFunction): void => {",
+      "    const result = schema.safeParse(req.body);",
+      "",
+      "    if (!result.success) {",
+      "      res.status(400).json({ error: 'Invalid request body', issues: result.error.issues });",
+      "      return;",
+      "    }",
+      "",
+      "    req.body = result.data;",
+      "    next();",
+      "  };",
+      "$0"
+    ],
+    "description": "xp-mw-validate: validate and replace an Express request body with Zod"
   }
 }

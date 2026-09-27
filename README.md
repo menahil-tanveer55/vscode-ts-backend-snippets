@@ -41,7 +41,7 @@ The generated code assumes:
 - **`.js` import extensions**: relative imports end in `.js` (for example `'../services/userService.js'`), even though the source file is `.ts`. This is what NodeNext requires, because the path must match the emitted file.
 - **Express 5** with `@types/express` v5.
 - **Errors flow to the error middleware**: Express 5 forwards rejected promises from async handlers automatically, so controllers and services do not catch errors just to log them or turn them into responses. Throw an `AppError` (`xp-error-base`) for expected failures such as "not found". `xp-mw-error` turns it into a response, and turns anything else into a generic 500.
-- **Validated request bodies**: controllers assume `req.body` has already been validated. `xp-mw-validate` (planned) will provide this.
+- **Validated request bodies**: controllers assume `req.body` has already been validated. Use `xp-mw-validate` before the controller; it replaces the body with Zod's parsed data and does not reassign Express 5's read-only `req.query`.
 - `import type` for type-only imports.
 
 ---
@@ -59,6 +59,7 @@ The generated code assumes:
 | Middleware | `xp-mw-auth`        | Auth Middleware        | Bearer token extraction and verification                                     |
 | Middleware | `xp-mw-error`       | Error Middleware       | 4-argument error handler: `AppError` and 4xx client errors, generic 500 else |
 | Middleware | `xp-mw-idempotency` | Idempotency Middleware | `Idempotency-Key` handling with payload hashing and response replay          |
+| Middleware | `xp-mw-validate`  | Request Validation     | Zod body validation; responds 400 with issues or replaces the body with parsed data |
 | Errors     | `xp-error-base`     | App Error              | `AppError` class with `statusCode`, `isOperational` and `cause`              |
 | Data       | `xp-service`        | Service Class          | Typed service class with an async method skeleton                            |
 | Data       | `xp-types`          | Types File             | Status union type plus entity, request and response interfaces               |
@@ -292,6 +293,30 @@ export const authMiddleware = async (
 
   next();
 };
+```
+
+---
+
+#### `xp-mw-validate`: Request Validation Middleware
+
+Creates Express middleware from a Zod schema. Invalid bodies receive a 400 response with Zod's validation issues; valid bodies are replaced with the parsed data before the next handler runs. It only writes `req.body`, because Express 5 exposes `req.query` through a getter. Add `zod` to `devDependencies`. Tab stop: middleware export name.
+
+```ts
+import type { ZodType } from 'zod';
+import type { NextFunction, Request, Response } from 'express';
+
+export const validateBody = <T>(schema: ZodType<T>) =>
+  (req: Request, res: Response, next: NextFunction): void => {
+    const result = schema.safeParse(req.body);
+
+    if (!result.success) {
+      res.status(400).json({ error: 'Invalid request body', issues: result.error.issues });
+      return;
+    }
+
+    req.body = result.data;
+    next();
+  };
 ```
 
 ---
@@ -604,7 +629,6 @@ npm run verify
 
 Snippets that will be added as patterns come up in real projects:
 
-- `xp-mw-validate`: Zod request validation middleware
 - `xp-mw-rate-limit`: rate-limit middleware
 - `xp-test-api`: Supertest integration test block
 - Prisma service method
