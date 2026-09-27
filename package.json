@@ -1,8 +1,13 @@
 {
   "name": "vscode-ts-backend-snippets",
-  "displayName": "Express TypeScript Backend Snippets",
+  "icon": "images/icon.png",
+  "displayName": "Express 5 TypeScript Snippets",
   "description": "Express 5 + TypeScript (ESM/NodeNext) snippets. Type xp- to scaffold apps, servers, routes, controllers, services, middleware, errors and Jest tests.",
-  "version": "0.1.0",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "version": "0.1.1",
   "publisher": "menahil-tanveer55",
   "license": "MIT",
   "private": true,
@@ -17,6 +22,11 @@
     "express",
     "typescript",
     "backend",
+    "rest api",
+    "router",
+    "express 5",
+    "controller",
+    "jest",
     "node",
     "snippets",
     "boilerplate",
