@@ -45,6 +45,7 @@ const SNIPPET_PATHS: Record<string, string> = {
   'xp-mw-error': 'src/middleware/error.ts',
   'xp-mw-auth': 'src/middleware/auth.ts',
   'xp-error-base': 'src/errors/AppError.ts',
+  'xp-test-api': 'src/__tests__/api.test.ts',
   'xp-test-unit': 'src/__tests__/unit.test.ts',
 };
 
@@ -71,6 +72,14 @@ const STUBS: Record<string, string> = {
   'src/auth/verifyToken.ts': [
     'export const verifyToken = async (token: string): Promise<{ id: string } | null> =>',
     "  token === 'valid' ? { id: 'user-1' } : null;",
+  ].join('\n'),
+  'src/app.ts': [
+    "import express from 'express';",
+    '',
+    'export const app = express();',
+    "app.get('/health', (_req, res) => {",
+    "  res.json({ status: 'ok' });",
+    '});',
   ].join('\n'),
 };
 

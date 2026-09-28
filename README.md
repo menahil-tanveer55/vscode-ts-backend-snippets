@@ -27,7 +27,7 @@ Names are hierarchical: `xp-<category>-<variant>`. Typing a category lists the w
 
 - `xp-mw` shows every middleware (`xp-mw-base`, `xp-mw-auth`, `xp-mw-error`, `xp-mw-idempotency`)
 - `xp-error` shows every error class (`xp-error-base`, the `AppError` that other error classes extend)
-- `xp-test` shows every test type (`xp-test-unit`)
+- `xp-test` shows every test type (`xp-test-api`, `xp-test-unit`)
 
 New snippets follow the same scheme, for example `xp-mw-validate`, `xp-mw-log`, `xp-test-api`, or `xp-error-*` subclasses of `AppError` such as a not-found error.
 
@@ -63,6 +63,7 @@ The generated code assumes:
 | Data       | `xp-service`        | Service Class          | Typed service class with an async method skeleton                            |
 | Data       | `xp-types`          | Types File             | Status union type plus entity, request and response interfaces               |
 | Data       | `xp-mockdb`         | Map Mock DB            | In-memory Map database plus the idempotency store                            |
+| Tests      | `xp-test-api`       | API Integration Test   | Supertest request against the Express app                                    |
 | Tests      | `xp-test-unit`      | Jest Unit Test         | Jest `describe` + `beforeEach` + `it.todo` for a service                     |
 
 ---
@@ -558,6 +559,26 @@ export const processedRequests = new Map<string, IdempotencyRecord>();
 
 ### Tests
 
+#### `xp-test-api`: Supertest API Integration Test
+
+Sends an HTTP request to the Express app exported by `xp-app`, without opening a listening server. It uses the generated health route as a starting example; adapt the path and assertions to the endpoint under test. Tab stop: request path.
+
+```ts
+import request from 'supertest';
+import { app } from '../app.js';
+
+describe('GET /health', () => {
+  it('returns a successful response', async () => {
+    const response = await request(app).get('/health');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ status: 'ok' });
+  });
+});
+```
+
+---
+
 #### `xp-test-unit`: Jest Unit Test
 
 Jest test file for a service class. The placeholder is `it.todo`, which Jest reports as pending, so an unwritten test cannot pass silently. A commented Arrange / Act / Assert skeleton is included to replace it. Tab stops: `ServiceName`, `serviceName`, test description.
@@ -606,7 +627,6 @@ Snippets that will be added as patterns come up in real projects:
 
 - `xp-mw-validate`: Zod request validation middleware
 - `xp-mw-rate-limit`: rate-limit middleware
-- `xp-test-api`: Supertest integration test block
 - Prisma service method
 - JWT sign / verify helpers
 

@@ -440,6 +440,25 @@
     "description": "xp-error-base: AppError class with statusCode, isOperational and cause, for the error middleware"
   },
 
+  "API Integration Test": {
+    "prefix": "xp-test-api",
+    "body": [
+      "import request from 'supertest';",
+      "import { app } from '../app.js';",
+      "",
+      "describe('GET ${1:/health}', () => {",
+      "  it('returns a successful response', async () => {",
+      "    const response = await request(app).get('${1:/health}');",
+      "",
+      "    expect(response.status).toBe(200);",
+      "    expect(response.body).toEqual({ status: 'ok' });",
+      "  });",
+      "});",
+      "$0"
+    ],
+    "description": "xp-test-api: Supertest integration test for an Express app"
+  },
+
   "Jest Unit Test": {
     "prefix": "xp-test-unit",
     "body": [
