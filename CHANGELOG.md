@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2
+
+- README: the Marketplace is now the main install method, with the manual `typescript.json` copy kept as an alternative. Title and intro match the extension name. No snippet changes.
+
 ## 0.1.1
 
 First release as a VS Code extension, with 14 `xp-` snippets:
