@@ -1,6 +1,6 @@
-# VS Code TypeScript Backend Snippets
+# Express 5 TypeScript Snippets
 
-A personal, growing collection of VS Code snippets for building Node.js / Express backends in TypeScript. Copy `typescript.json` into your VS Code snippets folder and get instant boilerplate for the app and server entry points, routes, controllers, services, middleware, errors and Jest tests.
+VS Code snippets for building Express 5 backends in TypeScript (ESM, NodeNext). Type `xp-` to get boilerplate for the app and server entry points, routes, controllers, services, middleware, errors and Jest tests.
 
 > Focused on backend development. More snippets are added as real patterns emerge from building apps.
 
@@ -10,10 +10,17 @@ A personal, growing collection of VS Code snippets for building Node.js / Expres
 
 ## Installation
 
-1. Open VS Code.
-2. Press `Cmd+Shift+P` (macOS) / `Ctrl+Shift+P` (Windows/Linux).
-3. Run **"Snippets: Configure User Snippets"** and choose **"typescript"**.
-4. Replace the contents of the file with [`typescript.json`](./typescript.json) from this repo (or merge the entries if you already have snippets).
+Install **Express 5 TypeScript Snippets** from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=menahil-tanveer55.vscode-ts-backend-snippets), or open the command palette with `Cmd+P` (macOS) / `Ctrl+P` (Windows/Linux) and run:
+
+```
+ext install menahil-tanveer55.vscode-ts-backend-snippets
+```
+
+To use the snippets without the extension:
+
+1. Press `Cmd+Shift+P` (macOS) / `Ctrl+Shift+P` (Windows/Linux).
+2. Run **"Snippets: Configure User Snippets"** and choose **"typescript"**.
+3. Replace the contents of the file with [`typescript.json`](./typescript.json) from this repo (or merge the entries if you already have snippets).
 
 The snippets are registered for the `typescript` language, so they are available in `.ts` files only. They do not appear in `.tsx` files, which use the separate `typescriptreact` language.
 
