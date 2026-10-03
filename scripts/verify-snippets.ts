@@ -37,6 +37,7 @@ const SNIPPET_PATHS: Record<string, string> = {
   'xp-route': 'src/routes/route.ts',
   'xp-controller': 'src/controllers/controller.ts',
   'xp-service': 'src/services/service.ts',
+  'xp-service-prisma': 'src/services/prismaService.ts',
   'xp-types': 'src/types/types.ts',
   'xp-mockdb': 'src/db/mockDb.ts',
   'xp-mw-idempotency': 'src/middleware/idempotency.ts',
@@ -71,6 +72,13 @@ const STUBS: Record<string, string> = {
   'src/auth/verifyToken.ts': [
     'export const verifyToken = async (token: string): Promise<{ id: string } | null> =>',
     "  token === 'valid' ? { id: 'user-1' } : null;",
+  ].join('\n'),
+  'src/generated/prisma/client.ts': [
+    'export interface PrismaClient {',
+    '  model: {',
+    '    findUnique: (args: { where: { id: string } }) => Promise<{ id: string } | null>;',
+    '  };',
+    '}',
   ].join('\n'),
 };
 
@@ -271,7 +279,7 @@ const projectDir = mkdtempSync(join(tmpdir(), 'verify-snippets-'));
 try {
   writeFileSync(join(projectDir, 'package.json'), JSON.stringify({ type: 'module' }, null, 2));
   writeFileSync(join(projectDir, 'tsconfig.json'), JSON.stringify(TSCONFIG, null, 2));
-  symlinkSync(join(REPO_ROOT, 'node_modules'), join(projectDir, 'node_modules'), 'dir');
+  symlinkSync(join(REPO_ROOT, 'node_modules'), join(projectDir, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir');
 
   const write = (relativePath: string, content: string): void => {
     const target = join(projectDir, relativePath);
@@ -292,8 +300,8 @@ try {
     files.set(path, snippet.prefix);
   }
 
-  const tsc = join(REPO_ROOT, 'node_modules', '.bin', 'tsc');
-  const result = spawnSync(tsc, ['-p', 'tsconfig.json', '--pretty', 'false'], {
+  const tscJs = join(REPO_ROOT, 'node_modules', 'typescript', 'bin', 'tsc');
+  const result = spawnSync(process.execPath, [tscJs, '-p', 'tsconfig.json', '--pretty', 'false'], {
     cwd: projectDir,
     encoding: 'utf8',
   });

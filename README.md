@@ -68,6 +68,7 @@ The generated code assumes:
 | Middleware | `xp-mw-idempotency` | Idempotency Middleware | `Idempotency-Key` handling with payload hashing and response replay          |
 | Errors     | `xp-error-base`     | App Error              | `AppError` class with `statusCode`, `isOperational` and `cause`              |
 | Data       | `xp-service`        | Service Class          | Typed service class with an async method skeleton                            |
+| Data       | `xp-service-prisma` | Prisma Service Method  | Service method using Prisma with explicit 404 `AppError` on missing record   |
 | Data       | `xp-types`          | Types File             | Status union type plus entity, request and response interfaces               |
 | Data       | `xp-mockdb`         | Map Mock DB            | In-memory Map database plus the idempotency store                            |
 | Tests      | `xp-test-unit`      | Jest Unit Test         | Jest `describe` + `beforeEach` + `it.todo` for a service                     |
@@ -510,6 +511,36 @@ export class ServiceName {
   async methodName(id: string): Promise<TypeName> {
 
     throw new Error('Not implemented');
+  }
+}
+```
+
+---
+
+#### `xp-service-prisma`: Prisma Service Method
+
+Typed service method using Prisma. Injects `PrismaClient` in constructor, executes a `findUnique` query, and throws an explicit `AppError(..., 404)` if the record is null so that missing records return a clean client 404 instead of a generic 500 error.
+
+Tab stops: import path to Prisma client, `EntityType`, `typesFile`, `ServiceName`, `findById` method name, parameter name, parameter type, record variable name, Prisma model name, capitalized entity name for error message.
+
+```ts
+import type { PrismaClient } from '../generated/prisma/client.js';
+import { AppError } from '../errors/AppError.js';
+import type { EntityType } from '../types/typesFile.js';
+
+export class ServiceName {
+  constructor(private readonly prisma: PrismaClient) {}
+
+  async findById(id: string): Promise<EntityType> {
+    const record = await this.prisma.model.findUnique({
+      where: { id },
+    });
+
+    if (!record) {
+      throw new AppError('Record not found', 404);
+    }
+
+    return record;
   }
 }
 ```

@@ -128,6 +128,33 @@
     "description": "xp-service: typed service class with an async method. Errors propagate unwrapped."
   },
 
+  "Prisma Service Method": {
+    "prefix": "xp-service-prisma",
+    "body": [
+      "import type { PrismaClient } from '${1:../generated/prisma/client.js}';",
+      "import { AppError } from '../errors/AppError.js';",
+      "import type { ${2:EntityType} } from '../types/${3:typesFile}.js';",
+      "",
+      "export class ${4:ServiceName} {",
+      "  constructor(private readonly prisma: PrismaClient) {}",
+      "",
+      "  async ${5:findById}(${6:id}: ${7:string}): Promise<${2:EntityType}> {",
+      "    const ${8:record} = await this.prisma.${9:model}.findUnique({",
+      "      where: { ${6:id} },",
+      "    });",
+      "",
+      "    if (!${8:record}) {",
+      "      throw new AppError('${10:Record} not found', 404);",
+      "    }",
+      "",
+      "    $0",
+      "    return ${8:record};",
+      "  }",
+      "}"
+    ],
+    "description": "xp-service-prisma: service method using Prisma with 404 AppError on missing record"
+  },
+
   "Types File": {
     "prefix": "xp-types",
     "body": [
